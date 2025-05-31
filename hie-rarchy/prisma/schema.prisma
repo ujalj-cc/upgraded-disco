@@ -1,0 +1,245 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Alarm {
+  id          Int       @id @default(autoincrement())
+  title       String
+  severity    String
+  status      String
+  timestamp   DateTime  @default(now())
+  equipmentId Int
+  value       String?
+  setpoint    String?
+  Equipment   Equipment @relation(fields: [equipmentId], references: [id])
+}
+
+model Chat {
+  id          Int           @id @default(autoincrement())
+  title       String
+  createdAt   DateTime      @default(now())
+  type        String
+  ChatMessage ChatMessage[]
+}
+
+model ChatMessage {
+  id        Int      @id @default(autoincrement())
+  timestamp DateTime @default(now())
+  chatId    Int
+  content   String
+  role      String
+  Chat      Chat     @relation(fields: [chatId], references: [id])
+}
+
+model Equipment {
+  id                Int                 @id @default(autoincrement())
+  name              String
+  type              String
+  location          String?
+  status            String
+  health            Int?
+  lastMaintenance   DateTime?
+  nextPM            DateTime?
+  installDate       DateTime?
+  manufacturer      String?
+  model             String?
+  serialNumber      String?
+  Alarm             Alarm[]
+  Event             Event[]
+  Insight           Insight[]
+  MaintenanceTicket MaintenanceTicket[]
+  PMSchedule        PMSchedule[]
+  TelemetryData     TelemetryData[]
+}
+
+model Event {
+  id          Int       @id @default(autoincrement())
+  title       String
+  type        String
+  timestamp   DateTime  @default(now())
+  equipmentId Int
+  user        String?
+  Equipment   Equipment @relation(fields: [equipmentId], references: [id])
+}
+
+model Insight {
+  id          Int       @id @default(autoincrement())
+  title       String
+  category    String
+  severity    String
+  equipmentId Int
+  description String
+  timestamp   DateTime  @default(now())
+  confidence  Int?
+  Equipment   Equipment @relation(fields: [equipmentId], references: [id])
+}
+
+model MaintenanceTicket {
+  id          Int       @id @default(autoincrement())
+  title       String
+  status      String
+  priority    String
+  assignee    String?
+  created     DateTime  @default(now())
+  equipmentId Int
+  location    String?
+  description String?
+  Equipment   Equipment @relation(fields: [equipmentId], references: [id])
+}
+
+model PMSchedule {
+  id          Int       @id @default(autoincrement())
+  title       String
+  frequency   String
+  dueDate     DateTime
+  assignee    String?
+  priority    String
+  status      String
+  equipmentId Int
+  description String?
+  Equipment   Equipment @relation(fields: [equipmentId], references: [id])
+}
+
+model TelemetryData {
+  id          Int        @id @default(autoincrement())
+  tagId       String
+  tagName     String
+  value       Float
+  unit        String
+  timestamp   DateTime   @default(now())
+  equipmentId Int?
+  Equipment   Equipment? @relation(fields: [equipmentId], references: [id])
+}
+
+model account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime
+  updatedAt             DateTime
+  userId                String?
+  user                  user?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model event_trends {
+  id          String                @id @default(uuid())
+  event_text  String
+  tags        String[]
+  locality_id String?
+  date        DateTime
+  embedding   Unsupported("vector")
+  source      String?               @default("manual")
+
+  localities localities? @relation(fields: [locality_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("event_trends")
+}
+
+model forecast_output {
+  id                  String      @id @db.Uuid
+  household_id        String?     @db.Uuid
+  date                DateTime    @db.Date
+  predicted_head      Float?
+  model_version       String?
+  confidence_interval Json?
+  households          households? @relation(fields: [household_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([household_id, date], map: "idx_forecast_date")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model households {
+  id              String            @id @db.Uuid
+  locality_id     String?           @db.Uuid
+  members         Int
+  created_at      DateTime?         @default(now()) @db.Timestamp(6)
+  forecast_output forecast_output[]
+  localities      localities?       @relation(fields: [locality_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  sensor_readings sensor_readings[]
+}
+
+model localities {
+  id           String         @id @db.Uuid
+  name         String
+  region       String
+  altitude     Float?
+  event_trends event_trends[]
+  households   households[]
+  weather_data weather_data[]
+}
+
+model sensor_readings {
+  id              String      @id @db.Uuid
+  timestamp       DateTime    @db.Timestamp(6)
+  household_id    String?     @db.Uuid
+  pt1             Float?
+  pt2             Float?
+  pt3             Float?
+  flow1           Float?
+  flow2           Float?
+  flow3           Float?
+  sump_level      Float?
+  calculated_head Float?
+  households      households? @relation(fields: [household_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([household_id, timestamp])
+  @@index([household_id, timestamp], map: "idx_sensor_time")
+}
+
+model session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime
+  updatedAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String?
+  user      user?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model user {
+  id            String    @id
+  email         String    @unique
+  name          String?
+  emailVerified Boolean
+  image         String?
+  createdAt     DateTime
+  updatedAt     DateTime
+  account       account[]
+  session       session[]
+}
+
+model verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
+}
+
+model weather_data {
+  id          String      @id @db.Uuid
+  locality_id String?     @db.Uuid
+  date        DateTime    @db.Date
+  temperature Float?
+  humidity    Float?
+  rainfall    Float?
+  localities  localities? @relation(fields: [locality_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([locality_id, date])
+  @@index([locality_id, date], map: "idx_weather_date")
+}
