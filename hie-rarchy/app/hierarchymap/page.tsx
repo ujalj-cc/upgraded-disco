@@ -59,26 +59,43 @@ export default function Home() {
             <Card className="p-6">
               <h2 className="text-lg font-semibold mb-4">Sample Data Format</h2>
               <div className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
-                <pre className="text-sm">
-                  {`CSV Format:
-srNo,empCode,empName,emailId,location,designation,reportingManager,department
-1,CEO001,John Smith,john.smith@company.com,New York,CEO,,Executive
-2,VP001,Sarah Johnson,sarah.johnson@company.com,New York,VP Engineering,CEO001,Engineering
+                <h2 className="text-lg font-semibold mb-4">Sample Excel Data Preview</h2>
+<div className="overflow-x-auto rounded-lg border border-gray-300">
+  <table className="min-w-full text-sm text-left text-gray-700 bg-white">
+    <thead className="bg-gray-100 font-semibold">
+      <tr>
+        <th className="px-4 py-2 border">empCode</th>
+        <th className="px-4 py-2 border">empName</th>
+        <th className="px-4 py-2 border">emailId</th>
+        <th className="px-4 py-2 border">location</th>
+        <th className="px-4 py-2 border">designation</th>
+        <th className="px-4 py-2 border">reportingManager</th>
+        <th className="px-4 py-2 border">department</th>
+      </tr>
+    </thead>
+    <tbody>
+      {[
+        ["1", "John Doe0", "john.doe0@somecompany.com", "Ahmedabad HQ", "CEO/Founder", "", "Management"],
+        ["37251", "John Doe1", "john.doe1@somecompany.com", "Ahmedabad HQ", "Vice President", "John Doe0", "Accounts and Finance"],
+        ["36970", "John Doe2", "john.doe2@somecompany.com", "Ahmedabad HQ", "CA", "John Doe0", "Accounts and Finance"],
+        ["37370", "John Doe3", "john.doe3@somecompany.com", "Ahmedabad HQ", "Finance Manager", "John Doe1", "Accounts and Finance"],
+        ["37272", "John Doe4", "john.doe4@somecompany.com", "Ahmedabad HQ", "Sr. Accounts Executive", "John Doe1", "Accounts and Finance"],
+        ["37369", "John Doe5", "john.doe5@somecompany.com", "Ahmedabad HQ", "Sr. Account Executive", "John Doe1", "Accounts and Finance"],
+        ["37359", "John Doe6", "john.doe6@somecompany.com", "Ahmedabad HQ", "Finance Executive", "John Doe3", "Accounts and Finance"],
+        ["37324", "John Doe7", "john.doe7@somecompany.com", "Ahmedabad HQ", "Commercial Executive", "John Doe3", "Accounts and Finance"],
+        ["37333", "John Doe8", "john.doe8@somecompany.com", "Ahmedabad HQ", "Account Executive", "John Doe4", "Accounts and Finance"],
+        ["37345", "John Doe9", "john.doe9@somecompany.com", "Ahmedabad HQ", "Account Executive", "John Doe4", "Accounts and Finance"]
+      ].map((row, idx) => (
+        <tr key={idx}>
+          {row.map((cell, i) => (
+            <td key={i} className="px-4 py-2 border">{cell}</td>
+          ))}
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
 
-JSON Format:
-[
-  {
-    "srNo": 1,
-    "empCode": "CEO001",
-    "empName": "John Smith",
-    "emailId": "john.smith@company.com",
-    "location": "New York",
-    "designation": "CEO",
-    "reportingManager": "",
-    "department": "Executive"
-  }
-]`}
-                </pre>
               </div>
             </Card>
           </div>
