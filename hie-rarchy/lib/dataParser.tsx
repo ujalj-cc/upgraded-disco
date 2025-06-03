@@ -2,7 +2,7 @@ import Papa from "papaparse"
 import type { Employee, ValidationResult } from "./types"
 
 export function parseCSV(csvText: string): Employee[] {
-  const result = Papa.parse(csvText, {
+  const result = Papa.parse<Employee>(csvText, {
     header: true,
     skipEmptyLines: true,
     transformHeader: (header) => header.trim(),
@@ -12,8 +12,8 @@ export function parseCSV(csvText: string): Employee[] {
     throw new Error(`CSV parsing error: ${result.errors[0].message}`)
   }
 
-  return result.data.map((row: any, index: number) => ({
-    srNo: Number.parseInt(row.srNo) || index + 1,
+  return result.data.map((row, index) => ({
+    srNo: Number.parseInt(String(row.srNo)) || index + 1,
     empCode: row.empCode?.trim() || "",
     empName: row.empName?.trim() || "",
     emailId: row.emailId?.trim() || "",
@@ -24,6 +24,7 @@ export function parseCSV(csvText: string): Employee[] {
   }))
 }
 
+
 export function parseJSON(jsonText: string): Employee[] {
   try {
     const data = JSON.parse(jsonText)
@@ -32,16 +33,17 @@ export function parseJSON(jsonText: string): Employee[] {
       throw new Error("JSON must contain an array of employee objects")
     }
 
-    return data.map((item: any, index: number) => ({
-      srNo: item.srNo || index + 1,
-      empCode: item.empCode?.trim() || "",
-      empName: item.empName?.trim() || "",
-      emailId: item.emailId?.trim() || "",
-      location: item.location?.trim() || "",
-      designation: item.designation?.trim() || "",
-      reportingManager: item.reportingManager?.trim() || "",
-      department: item.department?.trim() || "",
-    }))
+return data.map((item: Partial<Employee>, index: number) => ({
+  srNo: item.srNo || index + 1,
+  empCode: item.empCode?.trim() || "",
+  empName: item.empName?.trim() || "",
+  emailId: item.emailId?.trim() || "",
+  location: item.location?.trim() || "",
+  designation: item.designation?.trim() || "",
+  reportingManager: item.reportingManager?.trim() || "",
+  department: item.department?.trim() || "",
+}))
+
   } catch (error) {
     throw new Error(`JSON parsing error: ${error instanceof Error ? error.message : "Invalid JSON"}`)
   }

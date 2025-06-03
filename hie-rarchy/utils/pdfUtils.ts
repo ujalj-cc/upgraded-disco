@@ -1,91 +1,140 @@
-import html2canvas from "html2canvas"
-import jsPDF from "jspdf"
+// utils/pdfUtils.ts
 
-export async function exportToPDF(elementId: string, filename: string): Promise<void> {
+/**
+ * Export an element to PDF using html2canvas and jsPDF
+ * @param elementId - The ID of the element to export
+ * @param filename - The filename for the PDF (optional)
+ */
+export async function exportToPDF(elementId: string, filename: string = 'export.pdf') {
   try {
-    // Find the chart container
-    const element = document.querySelector(".h-96.w-full.border.rounded-lg") as HTMLElement
+    // Dynamic imports to avoid SSR issues
+    const html2canvas = (await import('html2canvas')).default
+    const jsPDF = (await import('jspdf')).default
 
+    const element = document.getElementById(elementId)
     if (!element) {
-      throw new Error("Chart element not found")
+      throw new Error(`Element with ID '${elementId}' not found`)
     }
 
-    // Create canvas from the element
+    // Create canvas with high quality settings
     const canvas = await html2canvas(element, {
-      backgroundColor: "#ffffff",
       scale: 2, // Higher resolution
       useCORS: true,
       allowTaint: true,
-      logging: false,
+      backgroundColor: '#ffffff',
+      width: element.offsetWidth,
+      height: element.offsetHeight,
+      scrollX: 0,
+      scrollY: 0,
+      windowWidth: window.innerWidth,
+      windowHeight: window.innerHeight,
     })
 
-    // Calculate PDF dimensions
-    const imgWidth = 210 // A4 width in mm
-    const pageHeight = 295 // A4 height in mm
-    const imgHeight = (canvas.height * imgWidth) / canvas.width
-    let heightLeft = imgHeight
+    // Get canvas dimensions
+    const canvasWidth = canvas.width
+    const canvasHeight = canvas.height
 
-    // Create PDF
-    const pdf = new jsPDF("p", "mm", "a4")
-    let position = 0
+    // Calculate PDF dimensions (in points, 72 DPI)
+    const pdfWidth = canvasWidth * 0.75  // Convert pixels to points
+    const pdfHeight = canvasHeight * 0.75
 
-    // Add first page
-    pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, position, imgWidth, imgHeight)
-    heightLeft -= pageHeight
+    // Determine orientation
+    const orientation = canvasWidth > canvasHeight ? 'landscape' : 'portrait'
 
-    // Add additional pages if needed
-    while (heightLeft >= 0) {
-      position = heightLeft - imgHeight
-      pdf.addPage()
-      pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, position, imgWidth, imgHeight)
-      heightLeft -= pageHeight
-    }
+    // Create PDF with custom dimensions
+    const pdf = new jsPDF({
+      orientation,
+      unit: 'pt',
+      format: [pdfWidth, pdfHeight],
+      compress: true
+    })
+
+    // Convert canvas to image data
+    const imgData = canvas.toDataURL('image/png', 1.0)
+
+    // Add image to PDF
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST')
 
     // Add metadata
     pdf.setProperties({
-      title: "Organizational Chart",
-      subject: "Company Organizational Structure",
-      author: "Org Chart Builder",
-      creator: "Org Chart Builder",
+      title: 'Organizational Chart',
+      subject: 'Company Organization Structure',
+      author: 'OrgChart App',
+      creator: 'OrgChart PDF Exporter',
+      keywords: 'organizational chart, company structure'
     })
 
+    // Generate filename with timestamp if not provided
+    const finalFilename = filename.includes('.pdf') 
+      ? filename 
+      : `${filename}-${new Date().toISOString().split('T')[0]}.pdf`
+
     // Save the PDF
-    pdf.save(filename)
+    pdf.save(finalFilename)
+
+    return true
   } catch (error) {
-    console.error("PDF export failed:", error)
-    throw new Error("Failed to export PDF. Please try again.")
+    console.error('PDF export failed:', error)
+    throw new Error(`Failed to export PDF: ${error instanceof Error ? error.message : 'Unknown error'}`)
   }
 }
 
-export function downloadAsImage(elementId: string, filename: string, format: "png" | "jpeg" = "png"): Promise<void> {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const element = document.querySelector(".h-96.w-full.border.rounded-lg") as HTMLElement
+/**
+ * Export multiple elements to a single PDF
+ * @param elementIds - Array of element IDs to export
+ * @param filename - The filename for the PDF
+ */
+export async function exportMultipleToPDF(elementIds: string[], filename: string = 'multi-export.pdf') {
+  try {
+    const html2canvas = (await import('html2canvas')).default
+    const jsPDF = (await import('jspdf')).default
 
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'pt',
+      format: 'a4'
+    })
+
+    let isFirstPage = true
+
+    for (const elementId of elementIds) {
+      const element = document.getElementById(elementId)
       if (!element) {
-        throw new Error("Chart element not found")
+        console.warn(`Element with ID '${elementId}' not found, skipping...`)
+        continue
       }
 
       const canvas = await html2canvas(element, {
-        backgroundColor: "#ffffff",
-        scale: 2,
+        scale: 1.5,
         useCORS: true,
         allowTaint: true,
+        backgroundColor: '#ffffff',
       })
 
-      // Create download link
-      const link = document.createElement("a")
-      link.download = `${filename}.${format}`
-      link.href = canvas.toDataURL(`image/${format}`)
+      const imgData = canvas.toDataURL('image/png')
+      
+      if (!isFirstPage) {
+        pdf.addPage()
+      }
 
-      // Trigger download
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+      // Fit image to page
+      const pdfWidth = pdf.internal.pageSize.getWidth()
+      const pdfHeight = pdf.internal.pageSize.getHeight()
+      const ratio = Math.min(pdfWidth / canvas.width, pdfHeight / canvas.height)
+      
+      const imgWidth = canvas.width * ratio
+      const imgHeight = canvas.height * ratio
+      const x = (pdfWidth - imgWidth) / 2
+      const y = (pdfHeight - imgHeight) / 2
 
-      resolve()
-    } catch (error) {
-      reject(error)
+      pdf.addImage(imgData, 'PNG', x, y, imgWidth, imgHeight)
+      isFirstPage = false
     }
-  })
+
+    pdf.save(filename)
+    return true
+  } catch (error) {
+    console.error('Multi-PDF export failed:', error)
+    throw new Error(`Failed to export multi-PDF: ${error instanceof Error ? error.message : 'Unknown error'}`)
+  }
 }

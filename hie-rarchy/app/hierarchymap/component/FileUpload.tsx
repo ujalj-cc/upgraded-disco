@@ -129,7 +129,7 @@
 
 "use client"
 
-import { useCallback, useState } from "react"
+import { useCallback } from "react"
 import { useDropzone } from "react-dropzone"
 import { Upload, FileText, AlertCircle } from "lucide-react"
 import * as XLSX from "xlsx"
@@ -144,7 +144,7 @@ interface FileUploadProps {
 }
 
 export function FileUpload({ onDataLoaded, onError, onLoading, isLoading }: FileUploadProps) {
-  const [dragActive, setDragActive] = useState(false)
+  //const [dragActive, setDragActive] = useState(false)
 
   const processFile = useCallback(
   async (file: File) => {
