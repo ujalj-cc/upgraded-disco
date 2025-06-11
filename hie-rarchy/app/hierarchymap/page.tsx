@@ -6,6 +6,14 @@ import { Chart } from "@/app/hierarchymap/component/Chart"
 import { Controls } from "@/app/hierarchymap/component/Controls"
 import type { Employee } from "@/lib/types"
 import { Card } from "@/components/ui/card"
+import { FileDown } from 'lucide-react';
+import { Button } from "@/components/ui/button"
+import { TooltipProvider } from "@/components/ui/tooltip"
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+
+
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
+
 
 export default function Home() {
   const [employees, setEmployees] = useState<Employee[]>([])
@@ -26,7 +34,9 @@ export default function Home() {
     setIsLoading(loading)
   }
 
+
   return (
+    <TooltipProvider>
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -59,7 +69,60 @@ export default function Home() {
             <Card className="p-6">
               <h2 className="text-lg font-semibold mb-4">Sample Data Format</h2>
               <div className="bg-gray-100 p-4 rounded-lg overflow-x-auto">
-                <h2 className="text-lg font-semibold mb-4">Sample Excel Data Preview</h2>
+                
+                <div className="flex items-center gap-4">
+                  <h2 className="text-lg font-semibold p-5">Sample Excel Data Preview</h2>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Dialog>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className="w-10 h-10 text-[#107C41] border-[#107C41] hover:bg-[#107C41]/10"
+                              >
+                                <FileDown className="w-5 h-5" />
+                              </Button>
+                            </DialogTrigger>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            <p className="text-xl">Download test excel</p>
+                          </TooltipContent>
+                        </Tooltip>
+                                
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Download Sample Excel?</DialogTitle>
+                          </DialogHeader>
+                          <p className="text-sm text-gray-600">Do you want to download <strong>dummyexcel.xlsx</strong> sample file?</p>
+                          <DialogFooter className="gap-2">
+                            <Button variant="outline">Cancel</Button>
+                            <Button
+                              onClick={() => {
+                                const fileUrl = "/dummyexcel.xlsx"
+                                const link = document.createElement("a")
+                                link.href = fileUrl
+                                link.download = "dummyexcel.xlsx"
+                                document.body.appendChild(link)
+                                link.click()
+                                document.body.removeChild(link)
+                              }}
+                            >
+                              Download
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+
+                    </TooltipTrigger>
+                    <TooltipContent side="top">
+                      <p className="text-xl">Download test excel</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+
+                
 <div className="overflow-x-auto rounded-lg border border-gray-300">
   <table className="min-w-full text-sm text-left text-gray-700 bg-white">
     <thead className="bg-gray-100 font-semibold">
@@ -109,5 +172,6 @@ export default function Home() {
         )}
       </main>
     </div>
+    </TooltipProvider>
   )
 }
